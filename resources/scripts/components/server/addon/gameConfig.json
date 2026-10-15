@@ -1,0 +1,26 @@
+{
+  "minecraft": {
+    "label": "Minecraft",
+    "platforms": ["modrinth", "curseforge"],
+    "game_versions": "minecraft",
+    "loaders": ["fabric", "forge", "neoforge", "quilt"],
+    "target_folder": "mods",
+    "allowed_extensions": ["jar", "zip"],
+    "nest_names": ["Minecraft"],
+    "installed_detection": { "extensions": ["jar"], "normalizer": "minecraft" }
+  },
+  "hytale": {
+    "label": "Hytale",
+    "platforms": ["curseforge"],
+    "target_folder": "mods",
+    "allowed_extensions": ["jar", "zip"],
+    "nest_names": ["hytale"]
+  },
+  "palworld": {
+    "label": "Palworld",
+    "platforms": ["curseforge"],
+    "target_folder": "mods",
+    "allowed_extensions": ["jar", "zip"],
+    "nest_names": ["Palworld"]
+  }
+}

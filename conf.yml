@@ -1,0 +1,36 @@
+info:
+  name: "Addon Browser"
+  identifier: "addonbrowser"
+  description: "Browse and download mods and modpacks from Modrinth and CurseForge across multiple games directly from the server panel."
+  version: "2.0.0-addon-browser"
+  target: "beta-2026-08"
+  author: "Alexander3312"
+  icon: 'resources/icon.png'
+  website: ''
+
+admin:
+  view: 'resources/views/view.blade.php'
+  controller: 'admin/controller.php'
+  css: ''
+  wrapper: ''
+
+dashboard:
+  css: ''
+  wrapper: ''
+  components: 'resources/scripts/components'
+
+data:
+  directory: ''
+  public: ''
+  console: ''
+
+requests:
+  views: ''
+  app: 'app'
+  routers:
+    application: ''
+    client: ''
+    web: 'routes/web.php'
+
+database:
+  migrations: "database/migrations"

@@ -1,0 +1,3 @@
+Navigation:
+  Routes:
+    - { Name: 'Addons', Path: '/addons', Type: 'server', Component: 'server/addon/AddonBrowserContainer', AdminOnly: 'false' }
