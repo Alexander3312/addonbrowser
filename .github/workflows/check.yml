@@ -1,0 +1,28 @@
+name: Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  php-lint:
+    name: PHP syntax (${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Versions supported by the Pterodactyl panel (composer.json: ^8.2 || ^8.3).
+        php: ['8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: none
+          coverage: none
+
+      - name: Lint every PHP file
+        run: |
+          find . -name '*.php' -not -path './.git/*' -print0 \
+            | xargs -0 -n1 php -l > /tmp/lint.log 2>&1 || { grep -v '^No syntax errors' /tmp/lint.log; exit 1; }
+          echo "$(grep -c '^No syntax errors' /tmp/lint.log) files OK"

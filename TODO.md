@@ -6,6 +6,14 @@ Things that are known to be missing, incomplete, or worth revisiting. Not a prom
 
 There's no PHPUnit suite. Every feature has been verified by hand (real API calls on real servers, one-off scripts), none of which is kept in the repository: nothing re-runs automatically after a change. See [`DEVELOPMENT.md`](DEVELOPMENT.md) for how to verify a change.
 
+## CI only checks PHP syntax
+
+The GitHub Actions workflow (`.github/workflows/check.yml`) only runs `php -l` on every PHP file. Worth adding:
+
+- **TypeScript type-check**: the component imports panel modules (`@/state/server`, `@/api/http`, `ServerContentBlock`…), so it can't compile on its own. The job would check out `pterodactyl/panel` at a pinned version, install its dependencies (`yarn`), copy `resources/scripts/components/server/addon` into it and run `tsc` with the panel's `tsconfig.json` (tolerating the known `TS7016` on `lodash-es/debounce`).
+- **Shell scripts**: `bash -n` on `private/install.sh` and `private/remove.sh`.
+- **JSON**: validate `gameConfig.json` (well-formed, and each game has the expected keys).
+
 ## `gameConfig.json` has no admin UI
 
 Adding or tweaking a game means editing `gameConfig.json` and redeploying — there's no screen for it. The admin screen that does exist (read-only) only covers the installed-mods referential (collisions, journal, stats, current state).
