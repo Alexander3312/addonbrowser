@@ -7,20 +7,23 @@
     "target_folder": "mods",
     "allowed_extensions": ["jar", "zip"],
     "nest_names": ["Minecraft"],
-    "installed_detection": { "extensions": ["jar"], "normalizer": "minecraft" }
+    "installed_detection": { "extensions": ["jar"], "normalizer": "minecraft" },
+    "curseforge": { "game_id": 432, "mod_class_ids": [6], "modpack_class_id": 4471 }
   },
   "hytale": {
     "label": "Hytale",
     "platforms": ["curseforge"],
     "target_folder": "mods",
     "allowed_extensions": ["jar", "zip"],
-    "nest_names": ["hytale"]
+    "nest_names": ["hytale"],
+    "curseforge": { "game_id": 70216, "mod_class_ids": [9137] }
   },
   "palworld": {
     "label": "Palworld",
     "platforms": ["curseforge"],
     "target_folder": "mods",
     "allowed_extensions": ["jar", "zip"],
-    "nest_names": ["Palworld"]
+    "nest_names": ["Palworld"],
+    "curseforge": { "game_id": 85196, "mod_class_ids": [6830, 6840, 6839, 6847, 6851] }
   }
 }

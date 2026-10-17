@@ -170,6 +170,46 @@ class AddonGameMapService
         return $extension !== '' && in_array($extension, $this->installedDetectionExtensions($game), true);
     }
 
+    /**
+     * The game's CurseForge gameId (`curseforge.game_id` in gameConfig.json),
+     * or null if it has none (no CurseForge search for this game).
+     */
+    public function curseForgeGameId(string $game): ?int
+    {
+        return self::positiveId($this->config()[strtolower($game)]['curseforge']['game_id'] ?? null);
+    }
+
+    /**
+     * The game's CurseForge mod classes (`curseforge.mod_class_ids` in
+     * gameConfig.json), see CurseForgeService::modClassIds(). Invalid ids are
+     * dropped; empty list = no mods offered on CurseForge for this game.
+     *
+     * @return int[]
+     */
+    public function curseForgeModClassIds(string $game): array
+    {
+        $ids = $this->config()[strtolower($game)]['curseforge']['mod_class_ids'] ?? null;
+
+        return is_array($ids) && array_is_list($ids)
+            ? array_values(array_filter(array_map([self::class, 'positiveId'], $ids), 'is_int'))
+            : [];
+    }
+
+    /**
+     * The game's CurseForge modpack class (`curseforge.modpack_class_id` in
+     * gameConfig.json), or null if it has none.
+     */
+    public function curseForgeModpackClassId(string $game): ?int
+    {
+        return self::positiveId($this->config()[strtolower($game)]['curseforge']['modpack_class_id'] ?? null);
+    }
+
+    /** A positive integer id (unsigned 32-bit), or null. */
+    private static function positiveId(mixed $value): ?int
+    {
+        return is_int($value) && $value > 0 && $value <= 4294967295 ? $value : null;
+    }
+
     public function resolveGameFromNestName(string $nestName): ?string
     {
         $normalizedNest = strtolower(trim($nestName));

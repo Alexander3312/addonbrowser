@@ -8,16 +8,6 @@ use Pterodactyl\BlueprintFramework\Extensions\addonbrowser\Support\ExternalApi;
 class CurseForgeService
 {
     /**
-     * Map game slugs to CurseForge gameIds.
-     * These are the official CurseForge game IDs.
-     */
-    private const GAME_ID_MAP = [
-        'minecraft' => 432,
-        'hytale' => 70216,
-        'palworld' => 85196,
-    ];
-
-    /**
      * CurseForge's modLoaderType enum — Minecraft-specific, not usable for other games.
      * Without `cauldron` (2): Cauldron is a hybrid Forge + Bukkit server, tied
      * to plugins, which the addon doesn't handle.
@@ -31,10 +21,12 @@ class CurseForgeService
     ];
 
     /**
-     * CurseForge classes that contain **mods**, per game: addonbrowser only
+     * CurseForge classes that contain **mods**, for a game
+     * (`curseforge.mod_class_ids` in gameConfig.json): addonbrowser only
      * offers mods (and modpacks, below), never the other classes (plugins,
-     * worlds, resource packs, prefabs, translations…). Taken from
-     * GET /v1/categories?gameId=…:
+     * worlds, resource packs, prefabs, translations…). The class ids of a game
+     * are listed by GET /v1/categories?gameId=… (`isClass: true`); for
+     * reference:
      * - Minecraft (432): Mods = 6; the other classes (Bukkit Plugins 5,
      *   Worlds 17, Resource Packs 12, Customization 4546, Data Packs 6945,
      *   Addons 4559, Shaders 6552) are excluded, Modpacks 4471 separately;
@@ -43,34 +35,25 @@ class CurseForgeService
      * - Palworld (85196): its five classes are all mods (Patch Pak,
      *   Blueprint Code, Lua Code, C++ Code, Miscellaneous).
      * Always enforced server-side, never accepted as is from the client (see
-     * AddonBrowserController::resolveCurseForgeClassId()). A game missing from
-     * this table gets no mods at all.
+     * AddonBrowserController::resolveCurseForgeClassId()). A game without
+     * mod classes gets no mods at all.
+     *
+     * @return int[]
      */
-    private const MOD_CLASS_IDS = [
-        'minecraft' => [6],
-        'hytale' => [9137],
-        'palworld' => [6830, 6840, 6839, 6847, 6851],
-    ];
-
-    /**
-     * CurseForge modpack class, per game. Only Minecraft is known for now (the
-     * only game with a modpack egg, see ModpackEggs); a game missing from this
-     * table has neither modpack search nor a verified, hence installable,
-     * modpack.
-     */
-    private const MODPACK_CLASS_ID_MAP = [
-        'minecraft' => 4471,
-    ];
-
-    /** @return int[] */
     public function modClassIds(string $game): array
     {
-        return self::MOD_CLASS_IDS[strtolower($game)] ?? [];
+        return $this->gameMapService->curseForgeModClassIds($game);
     }
 
+    /**
+     * CurseForge modpack class of a game (`curseforge.modpack_class_id` in
+     * gameConfig.json; only Minecraft has one, being the only game with a
+     * modpack egg, see ModpackEggs). A game without one has neither modpack
+     * search nor a verified, hence installable, modpack.
+     */
     public function modpackClassId(string $game): ?int
     {
-        return self::MODPACK_CLASS_ID_MAP[strtolower($game)] ?? null;
+        return $this->gameMapService->curseForgeModpackClassId($game);
     }
 
     private string $apiBaseUrl = 'https://api.curseforge.com/v1';
@@ -166,12 +149,12 @@ class CurseForgeService
     }
 
     /**
-     * Get the CurseForge gameId for a given game slug.
+     * Get the CurseForge gameId of a game (`curseforge.game_id` in
+     * gameConfig.json), or null if it has none.
      */
     public function getGameId(string $game): ?int
     {
-        $normalized = strtolower($game);
-        return self::GAME_ID_MAP[$normalized] ?? null;
+        return $this->gameMapService->curseForgeGameId($game);
     }
 
     /**

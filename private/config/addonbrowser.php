@@ -22,8 +22,20 @@
 // with or without a token: it only identifies the panel's traffic. Sent only to
 // api.modrinth.com (Support\ExternalApi::modrinthHeaders()), never to the CDN
 // or to CurseForge. Give it as few permissions as possible (no write scope).
+//
+// modpack_eggs: ids of the panel's modpack eggs, per game and source platform
+// (Support\ModpackEggs). Panel-specific, hence in the .env:
+//   ADDONBROWSER_MINECRAFT_MODPACK_EGG_MODRINTH=<egg id>
+//   ADDONBROWSER_MINECRAFT_MODPACK_EGG_CURSEFORGE=<egg id>
+// Unset → modpack installs are off for that platform.
 return [
     'log_level' => env('ADDONBROWSER_LOG_LEVEL', 'error'),
     'curseforge_api_key' => env('CURSEFORGE_API_KEY'),
     'modrinth_api_key' => env('MODRINTH_API_KEY'),
+    'modpack_eggs' => [
+        'minecraft' => [
+            'modrinth' => env('ADDONBROWSER_MINECRAFT_MODPACK_EGG_MODRINTH'),
+            'curseforge' => env('ADDONBROWSER_MINECRAFT_MODPACK_EGG_CURSEFORGE'),
+        ],
+    ],
 ];

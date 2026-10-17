@@ -17,7 +17,7 @@
 - `conf.yml` — extension metadata & config.
 - `app/AddonBrowserController.php` — HTTP routes: search, download, install.
 - `app/Services/` — one service per external platform (`ModrinthService`, `CurseForgeService`), plus the game config (`AddonGameMapService`) and the modpack install flow (`ModpackInstallService`).
-- `resources/scripts/components/server/addon/gameConfig.json` — **the per-game config**: platforms, loaders, allowed extensions, nest names, installed-mod detection settings. This is the file to edit to add a new game, or to tweak an existing one.
+- `resources/scripts/components/server/addon/gameConfig.json` — **the per-game config**: platforms, loaders, allowed extensions, nest names, installed-mod detection settings, CurseForge game and class ids. This is the file to edit to add a new game, or to tweak an existing one.
 - `app/Jobs/` — background work: installed-mod detection, modpack manifest indexing. Never run on the request path.
 - `app/Models/` — the small referential used for installed-mod detection (`Mod`, `ModFile`).
 - `resources/scripts/components/server/addon/AddonBrowserContainer.tsx` — UI code (React + Tailwind).
@@ -49,37 +49,45 @@ Modpacks are Minecraft-only for now: other games get mods, but no "Modpacks" tab
 
 ### Setting up modpack installs (optional)
 
-Full modpack installs (Minecraft only) need extra setup, because the eggs they rely on aren't shipped with the addon and their ids are hardcoded:
+Full modpack installs (Minecraft only) need extra setup, because the eggs they rely on aren't shipped with the addon:
 
-1. Install the `eggswitch` extension (1.1.0 or later).
+1. Install the `eggswitch` extension (1.1.0 or later). It isn't public yet: its repository should be published soon.
 2. Create (or reuse) one modpack egg per platform on your panel. Its install script must wipe the server first, then install the pack from these variables:
    - **Modrinth**: `MODRINTH_PROJECT_ID` and `MODRINTH_VERSION_ID` (the version *number*, e.g. `13.5.0`, not the internal version id), typically with [`mrpack-install`](https://github.com/nothub/mrpack-install). `SERVER_JARFILE` gets the egg's default value.
    - **CurseForge**: `PROJECT_ID` and `VERSION_ID` (the numeric CurseForge file id). Keep the CurseForge API key as an admin-only variable of the egg (`API_KEY`): the addon never sends it.
-3. Allow both eggs for addon use in eggswitch's admin screen.
-4. Put your own egg ids in `app/Support/ModpackEggs.php`, in the `MAP` constant, then rebuild the addon:
 
-   ```php
-   private const MAP = [
-       'minecraft' => [
-           'modrinth' => 26,   // your Modrinth modpack egg id
-           'curseforge' => 18, // your CurseForge modpack egg id
-       ],
-   ];
+     The easy way: import the community [CurseForge Generic egg](https://github.com/pelican-eggs/minecraft/tree/main/java/curseforge) from pelican-eggs. It already uses these variables, keeps `API_KEY` hidden from server owners, and leaves the manifest the addon reads. The only change it needs is the wipe, added at the very top of its install script, right after `#!/bin/bash`:
+
+     ```bash
+     : "${SERVER_DIR:=/mnt/server}"
+     cd "${SERVER_DIR:?SERVER_DIR is empty, refusing to continue}" || exit 1
+     rm -rf -- ..?* .[!.]* * 2>/dev/null
+     ```
+
+     Then set your CurseForge API key in the egg's `API_KEY` variable.
+3. Allow both eggs for addon use in eggswitch's admin screen.
+4. Put their ids in your panel's `.env`, then run `php artisan config:cache`:
+
    ```
+   ADDONBROWSER_MINECRAFT_MODPACK_EGG_MODRINTH=26
+   ADDONBROWSER_MINECRAFT_MODPACK_EGG_CURSEFORGE=18
+   ```
+
+   (`26` and `18` are examples: use your own eggs' ids, shown in the admin panel under Nests. A platform without an id simply has no modpack installs.)
 
 When a modpack is installed, the addon pre-selects the right Java version for it. This works if the egg's Docker image labels start with `Java <n>` (e.g. `Java 21 (MC 1.20.5 - 1.21.x)`); otherwise there's simply no pre-selection. Which Minecraft versions need which Java is hardcoded in `app/Support/MinecraftJavaImages.php` (`THRESHOLDS` and `FALLBACK_LABEL`): when a new Minecraft release moves to a newer Java, that list has to be updated by hand.
 
 For the installed-mods badge to recognize a modpack's mods right after the install, the egg should leave the pack's manifest at the server root: `modpack.json` (what `mrpack-install` leaves) for Modrinth, `manifest.json` or `client.manifest.json` for CurseForge. Without it, the mods are still recognized later, just more slowly.
 
-Without this setup, the "Modpacks" tab simply stays hidden. Making these ids configurable without touching the code is on the [`TODO.md`](TODO.md) list.
+Without this setup, the "Modpacks" tab simply stays hidden.
 
 ## Uninstalling
 
-`blueprint -remove addonbrowser`. The known-mods tables are kept (Blueprint doesn't roll back migrations on removal) — nothing is lost if you reinstall later.
+`blueprint -remove addonbrowser`. The known-mods tables are kept (Blueprint doesn't roll back migrations on removal) — nothing is lost if you reinstall later. The addon's `config/addonbrowser.php` is removed, but its values live in your `.env`, which isn't touched.
 
 ## Updating
 
-Install the new `.blueprint` the same way. Blueprint's own install step already runs `php artisan queue:restart`, so the queue worker picks up the new job code without anything extra to do.
+Install the new `.blueprint` the same way. The install redeploys `config/addonbrowser.php` from the new version (your settings stay in `.env`), and Blueprint's own install step already runs `php artisan queue:restart`, so the queue worker picks up the new job code without anything extra to do.
 
 ## How it Works
 

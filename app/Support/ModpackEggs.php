@@ -3,42 +3,31 @@
 namespace Pterodactyl\BlueprintFramework\Extensions\addonbrowser\Support;
 
 /**
- * Static mapping (game, platform) -> id of the egg dedicated to modpack
- * installs (see architecture-addonbrowser-addon.md §6).
+ * (game, platform) -> id of the egg dedicated to modpack installs (see
+ * architecture-addonbrowser-addon.md §6).
  *
- * **Hardcoded values, specific to the panel the addon was developed on**: the
- * ids in MAP are only examples, to replace with the ids of your own panel's
- * modpack eggs (see the README, "Setting up modpack installs"). These eggs
- * aren't shipped with the addon.
+ * The ids are panel-specific, so they come from the panel's `.env`, through
+ * config/addonbrowser.php (`modpack_eggs`), e.g.
+ * `ADDONBROWSER_MINECRAFT_MODPACK_EGG_MODRINTH=26` — never from the code, and
+ * never overwritten by an addon update. No id set → modpack installs are off
+ * for that (game, platform). See the README, "Setting up modpack installs".
  *
- * A two-key table rather than a single constant: one game has one modpack egg
- * per source platform, each with its own install tool.
+ * One egg per (game, platform): each source platform has its own install tool
+ * and variables (see ModpackInstallService::buildEnvironment()):
+ * - `modrinth`: an egg that installs a .mrpack with mrpack-install
+ *   (MODRINTH_PROJECT_ID / MODRINTH_VERSION_ID = the version_number);
+ * - `curseforge`: an egg that installs a full CurseForge modpack (mods +
+ *   loader + overrides), with the API key as an admin-only variable
+ *   (PROJECT_ID / VERSION_ID = the numeric fileId).
+ * Both must wipe the server at the start of their install script.
  *
- * Grants access to NOTHING on its own: an id being listed here isn't enough
+ * Grants access to NOTHING on its own: a configured id isn't enough
  * to use it — it must also be whitelisted in eggswitch
  * (`EggWhitelist::isAllowedForAddon()`), which stays the only authority on
  * what's actually allowed. See ModpackInstallService::isAvailable().
  */
 class ModpackEggs
 {
-    /**
-     * @var array<string, array<string, int>>
-     */
-    private const MAP = [
-        'minecraft' => [
-            // Example: id of an egg that installs a .mrpack with mrpack-install
-            // (MODRINTH_PROJECT_ID / MODRINTH_VERSION_ID).
-            'modrinth' => 26,
-            // Example: id of an egg that installs a full CurseForge modpack
-            // (mods + loader + overrides), wiping the server at the start of
-            // script_install, with the API key as an admin-only variable. See
-            // ModpackInstallService::buildEnvironment() for the expected format
-            // (PROJECT_ID/VERSION_ID, VERSION_ID = numeric fileId, not a
-            // filename).
-            'curseforge' => 18,
-        ],
-    ];
-
     /**
      * Manifests left at the server root by the install script of each
      * platform's modpack egg, read after the install by WatchModpackInstallJob.
@@ -61,7 +50,14 @@ class ModpackEggs
         $game = strtolower(trim($game));
         $platform = strtolower(trim($platform));
 
-        return self::MAP[$game][$platform] ?? null;
+        $map = config('addonbrowser.modpack_eggs');
+        $id = is_array($map) ? ($map[$game][$platform] ?? null) : null;
+        if (is_string($id) && ctype_digit(trim($id))) {
+            $id = (int) trim($id);
+        }
+
+        // A positive integer, or nothing (unset, empty or malformed value).
+        return is_int($id) && $id > 0 && $id <= 4294967295 ? $id : null;
     }
 
     /**
