@@ -3,14 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use Pterodactyl\BlueprintFramework\Extensions\addonbrowser\AddonBrowserController;
 use Pterodactyl\BlueprintFramework\Extensions\addonbrowser\Http\Middleware\EnsureHasServerAccess;
+use Pterodactyl\BlueprintFramework\Extensions\addonbrowser\Http\Middleware\EnsureTwoFactorWhenRequired;
 
 // Every route of the addon requires a logged-in user: the "blueprint" middleware
 // group (see app/Http/Kernel.php) has no authentication check by default, so
 // without this middleware these endpoints would be reachable anonymously (open
 // proxy to CurseForge/Modrinth, server info leak).
+// "auth.session" (like the panel's own routes): a session invalidated by a
+// password change ("log out other devices") is refused here too.
+// EnsureTwoFactorWhenRequired applies the panel's mandatory-2FA setting.
 // EnsureHasServerAccess also requires the user to have access to at least one
 // server (or to be an admin).
-Route::middleware(['auth', EnsureHasServerAccess::class])->group(function () {
+Route::middleware(['auth', 'auth.session', EnsureTwoFactorWhenRequired::class, EnsureHasServerAccess::class])->group(function () {
     // 3rd parameter = explicit throttle prefix: without it, Laravel's rate limiter
     // key depends ONLY on the authenticated user, never on the route (see
     // vendor/laravel/framework/.../ThrottleRequests::resolveRequestSignature()) —

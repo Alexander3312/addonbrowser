@@ -7,7 +7,7 @@
 - **Search & one-click install** for mods on Modrinth and CurseForge, written straight into the server's mod folder.
 - **Automatic game detection** from the server's nest — nothing to pick manually, the tab adapts itself.
 - **"Installed" badges** on search results: the addon recognizes mods already on the server, even the same mod published on both platforms, or renamed by hand — so you don't install the same mod twice under two different filenames (a common cause of a server crashing on boot).
-- **Full modpack installs** (Minecraft only for now), through the companion `eggswitch` extension if it's installed: egg switch + reinstall, with a destructive-action confirmation and an optional backup first.
+- **Full modpack installs** (Minecraft only for now), through the companion [`eggswitch`](https://github.com/Alexander3312/eggswitch) extension if it's installed: egg switch + reinstall, with a destructive-action confirmation and an optional backup first.
 - **Read-only admin screen**: known-mods overview, naming collisions, usage stats.
 
 ## Folder Structure
@@ -51,7 +51,7 @@ Modpacks are Minecraft-only for now: other games get mods, but no "Modpacks" tab
 
 Full modpack installs (Minecraft only) need extra setup, because the eggs they rely on aren't shipped with the addon:
 
-1. Install the `eggswitch` extension (1.1.0 or later). It isn't public yet: its repository should be published soon.
+1. Install the [`eggswitch`](https://github.com/Alexander3312/eggswitch) extension (1.1.0 or later).
 2. Create (or reuse) one modpack egg per platform on your panel. Its install script must wipe the server first, then install the pack from these variables:
    - **Modrinth**: `MODRINTH_PROJECT_ID` and `MODRINTH_VERSION_ID` (the version *number*, e.g. `13.5.0`, not the internal version id), typically with [`mrpack-install`](https://github.com/nothub/mrpack-install). `SERVER_JARFILE` gets the egg's default value.
    - **CurseForge**: `PROJECT_ID` and `VERSION_ID` (the numeric CurseForge file id). Keep the CurseForge API key as an admin-only variable of the egg (`API_KEY`): the addon never sends it.
@@ -59,9 +59,7 @@ Full modpack installs (Minecraft only) need extra setup, because the eggs they r
      The easy way: import the community [CurseForge Generic egg](https://github.com/pelican-eggs/minecraft/tree/main/java/curseforge) from pelican-eggs. It already uses these variables, keeps `API_KEY` hidden from server owners, and leaves the manifest the addon reads. The only change it needs is the wipe, added at the very top of its install script, right after `#!/bin/bash`:
 
      ```bash
-     : "${SERVER_DIR:=/mnt/server}"
-     cd "${SERVER_DIR:?SERVER_DIR is empty, refusing to continue}" || exit 1
-     rm -rf -- ..?* .[!.]* * 2>/dev/null
+     find /mnt/server -mindepth 1 -delete
      ```
 
      Then set your CurseForge API key in the egg's `API_KEY` variable.

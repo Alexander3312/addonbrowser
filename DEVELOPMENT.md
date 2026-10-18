@@ -40,7 +40,7 @@ There's no PHPUnit suite. Three ways to verify a change:
 
 ## HTTP API (`/extensions/addonbrowser`)
 
-Auth: logged-in session (`auth`), plus `EnsureHasServerAccess` (must own or be a subuser on at least one server, or be an admin — closes off the search endpoints as an open relay to Modrinth/CurseForge for an account with no server at all). Each throttle has an explicit prefix (`throttle:N,M,<prefix>`) — without one, Laravel's rate limiter keys on the user alone, regardless of route, so a permissive route and a strict one would share the same counter.
+Auth: logged-in session (`auth`, `auth.session`), the panel's mandatory two-factor setting (`EnsureTwoFactorWhenRequired`: an account that must use 2FA and hasn't set it up gets the panel's JSON 400), plus `EnsureHasServerAccess` (must own or be a subuser on at least one server, or be an admin — closes off the search endpoints as an open relay to Modrinth/CurseForge for an account with no server at all). Each throttle has an explicit prefix (`throttle:N,M,<prefix>`) — without one, Laravel's rate limiter keys on the user alone, regardless of route, so a permissive route and a strict one would share the same counter.
 
 | Route | Throttle | Auth | Role |
 |---|---|---|---|
